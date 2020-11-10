@@ -41,7 +41,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 cap.set(cv2.CAP_PROP_FPS, frame)
 index = 1
-# World: Attempt to load unknown plugin: hmd_streaming
+
 try:
   while True:
     payload = {}
