@@ -1,8 +1,8 @@
 from zmq_tools import *
 import traceback
 addr = '192.168.0.213'  # remote ip or localhost
-req_port = "50020"  # same as in the pupil remote gui
-ipc_sub_url = "tcp://{}:{}".format(addr, req_port)
+sub_port = "50020"  # same as in the pupil remote gui
+sub.connect("tcp://{}:{}".format(addr, sub_port))
 zmq_ctx = zmq.Context()
 sub = Msg_Receiver(zmq_ctx, ipc_sub_url, topics=("hmd_streaming.world",), block_until_connected=True)
 

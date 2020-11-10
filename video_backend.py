@@ -7,8 +7,8 @@ import traceback
 from zmq_tools import *
 
 addr = '127.0.0.1'  # remote ip or localhost
-req_port = "50020"  # same as in the pupil remote gui
-ipc_pub_url = "tcp://{}:{}".format(addr, req_port)
+pub_port = "50020"  # same as in the pupil remote gui
+ipc_pub_url = "tcp://{}:{}".format(addr, pub_port)
 zmq_ctx = zmq.Context()
 pupil_socket = Msg_Streamer(zmq_ctx, ipc_pub_url)
 
