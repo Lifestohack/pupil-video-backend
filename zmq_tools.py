@@ -141,7 +141,7 @@ class Msg_Streamer(ZMQ_Socket):
         if hwm is not None:
             self.socket.set_hwm(hwm)
 
-        self.socket.connect(url)
+        self.socket.bind(url)
 
     def send(self, payload, deprecated=()):
         """Send a message with topic, payload
