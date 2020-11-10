@@ -16,6 +16,18 @@ pub_port = pupil_remote.recv_string()
 icp_pub_add = "tcp://127.0.0.1:{}".format(pub_port)
 pub_socket = Msg_Streamer(ctx, icp_pub_add, hwm=2)
 
+# send notification:
+def notify(notification):
+    """Sends ``notification`` to Pupil Remote"""
+    topic = "notify." + notification["subject"]
+    payload = serializer.dumps(notification, use_bin_type=True)
+    pupil_remote.send_string(topic, flags=zmq.SNDMORE)
+    pupil_remote.send(payload)
+    return pupil_remote.recv_string()
+
+# Start the annotations plugin
+notify({"subject": "start_plugin", "name": "hmd_streaming", "args": {}})
+
 intrinsics = [
                 [406.74054872359386, 0.0, 332.0196776862145],
                 [0.0, 392.27339466867005, 242.29314229816816],
@@ -43,6 +55,7 @@ try:
     payload["format"] = "bgr"
     payload["projection_matrix"] = intrinsics
     pub_socket.send(payload)
+    print(pub_port)
     print(index)
     index = index + 1
 except (KeyboardInterrupt, SystemExit):
