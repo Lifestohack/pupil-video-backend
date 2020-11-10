@@ -5,6 +5,14 @@ import sys
 import traceback
 from zmq_tools import *
 
+height = 360
+width = 640
+frame = 90
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+cap.set(cv2.CAP_PROP_FPS, frame)
+
 # Setup zmq context and remote helper
 ctx = zmq.Context()
 
@@ -26,22 +34,15 @@ def notify(notification):
     return pupil_remote.recv_string()
 
 # Start the annotations plugin
-notify({"subject": "start_plugin", "name": "hmd_streaming", "args": {}})
+notify({"subject": "start_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.world",)}})
 
 intrinsics = [
                 [406.74054872359386, 0.0, 332.0196776862145],
                 [0.0, 392.27339466867005, 242.29314229816816],
                 [0.0, 0.0, 1.0],
             ]
-height = 360
-width = 640
-frame = 90
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-cap.set(cv2.CAP_PROP_FPS, frame)
 index = 1
-
+# World: Attempt to load unknown plugin: hmd_streaming
 try:
   while True:
     payload = {}
@@ -55,7 +56,6 @@ try:
     payload["format"] = "bgr"
     payload["projection_matrix"] = intrinsics
     pub_socket.send(payload)
-    print(pub_port)
     print(index)
     index = index + 1
 except (KeyboardInterrupt, SystemExit):
