@@ -5,14 +5,6 @@ import sys
 import traceback
 from zmq_tools import *
 
-height = 360
-width = 640
-frame = 90
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-cap.set(cv2.CAP_PROP_FPS, frame)
-
 # Setup zmq context and remote helper
 ctx = zmq.Context()
 
@@ -41,8 +33,15 @@ intrinsics = [
                 [0.0, 392.27339466867005, 242.29314229816816],
                 [0.0, 0.0, 1.0],
             ]
+height = 360
+width = 640
+frame = 90
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+cap.set(cv2.CAP_PROP_FPS, frame)
 index = 1
-
+# World: Attempt to load unknown plugin: hmd_streaming
 try:
   while True:
     payload = {}
