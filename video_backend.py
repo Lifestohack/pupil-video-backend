@@ -33,26 +33,22 @@ intrinsics = [
                 [0.0, 392.27339466867005, 242.29314229816816],
                 [0.0, 0.0, 1.0],
             ]
-height = 360
-width = 640
-frame = 90
+
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-cap.set(cv2.CAP_PROP_FPS, frame)
 index = 1
 
 try:
   while True:
     payload = {}
     ret, image = cap.read()
+    height, width, channels = image.shape
     payload["timestamp"] = time.time()
     payload["__raw_data__"] = [image]
     payload["topic"] = "hmd_streaming.world"
     payload["width"] = width
     payload["height"] = height
     payload["index"] = index
-    payload["format"] = "bgr"
+    payload["format"] = "rgb"
     payload["projection_matrix"] = intrinsics
     pub_socket.send(payload)
     print(index)
