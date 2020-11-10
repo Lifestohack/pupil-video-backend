@@ -1,5 +1,5 @@
 from zmq_tools import *
-
+import traceback
 addr = '192.168.0.213'  # remote ip or localhost
 req_port = "50020"  # same as in the pupil remote gui
 ipc_sub_url = "tcp://{}:{}".format(addr, req_port)
@@ -10,5 +10,7 @@ try:
     while True:
         topic, msg = sub.recv_topic()
         print(topic)
-except Exception:
-    pass
+except Exception as ex:
+    print('Python error with no Exception handler:')
+    print('Traceback error:', ex)
+    traceback.print_exc()
