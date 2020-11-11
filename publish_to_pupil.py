@@ -88,4 +88,5 @@ if __name__ == "__main__":
         traceback.print_exc()
     finally:
         streamimage.close()
+        camera.close()
         sys.exit(0)
