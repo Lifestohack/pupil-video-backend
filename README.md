@@ -1,4 +1,8 @@
 # Pupil Video Backend
+
+This program helps you to stream the video from another computer or Raspberry pi to your computer where pupil capture software is running. No configuration is needed on the computer where pupil capture software is running. Just Run this program on remote computer with webcam. Make sure pupil capture software is already running before running this program.
+
+
 Clone the repo
 ```sh
 git clone https://github.com/Lifestohack/pupil-video-backend.git
