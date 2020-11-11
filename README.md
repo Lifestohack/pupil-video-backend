@@ -25,7 +25,7 @@ python main.py [-h] [-d DEVICE] [-i IP] [-p PORT] [-vs VIDEOSOURCE]
 Example:
 ```sh
 python main.py -d world -i 127.0.0.1 -p 50020 -vs 0
-# -d, -i, -p and -vsare optional. By default world view is streamed using videosource with Id 0.
+# -d, -i, -p and -vs are optional. By default world view is streamed using videosource with Id 0.
 # -d has three options: world or eye0 or eye1
 ```
 
