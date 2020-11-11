@@ -44,15 +44,24 @@ class VideoBackEnd():
         # Step 4
         icp_pub_add = "tcp://{}:{}".format(ip, pub_port)
         self.pub_socket = Msg_Streamer(ctx, icp_pub_add, hwm=hwm)
-        self.setVideoCaptureParam()
 
 
-    def start(self, device):
+    def start(self, device, videosource=0):
         # Start the plugin
         topic = "hmd_streaming." + device
-        notification = self._notify({"subject": "start_eye_plugin", "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
+        plugin_type = ""
+        if device == "world":
+            plugin_type = "start_plugin"
+        elif device == "eye0" or device == "eye1":
+            plugin_type = "start_eye_plugin"
+        else:
+            raise ValueError("Options for devices are: world, eye0, eye1")
+        notification = self._notify({"subject": plugin_type, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
         print("Notification for {}: {}".format(device, notification))
-        self._streamVideo(device)
+        if videosource is not None:
+            self.videosource = videosource
+            self.setVideoCaptureParam(videosource=self.videosource)
+            self._streamVideo(device)
     
     def get_pub_socket(self):
         return self.pub_socket
@@ -66,10 +75,10 @@ class VideoBackEnd():
         self.pupil_remote.send(payload)
         return self.pupil_remote.recv_string()
 
-    def setVideoCaptureParam(self, source=0, height=240, width=320, frame=30):
-        if source is None:
+    def setVideoCaptureParam(self, videosource=0, height=240, width=320, frame=30):
+        if videosource is None:
             print("Using default camera source: 0")
-        self.source = 0 if source is None else source
+        self.videosource = 0 if videosource is None else videosource
         self.height = 240 if height is None else height
         self.width = 320 if width is None else width
         self.frame = 30 if frame is None else frame
@@ -79,7 +88,7 @@ class VideoBackEnd():
         frame_index = 1
         fps = 0
         counter = 0
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(self.videosource)
         cap.set(3, self.width)
         cap.set(4, self.height)
         cap.set(5, self.frame)
