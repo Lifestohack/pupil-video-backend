@@ -4,6 +4,7 @@ import time
 import traceback
 import sys
 from zmq_tools import *
+from payload import *
 
 class VideoBackEnd():
     def __init__(self, ip=None, port=None, hwm=None):
@@ -34,6 +35,7 @@ class VideoBackEnd():
 
         # Step 2
         self.pupil_remote.send_string("PUB_PORT")
+        print("Waiting for the publish port from Pupil Capture software.")
 
         # Step 3
         pub_port = self.pupil_remote.recv_string()
@@ -45,11 +47,12 @@ class VideoBackEnd():
         self.setVideoCaptureParam()
 
 
-    def start(self):
+    def start(self, device):
         # Start the plugin
-        world_notification = self._notify({"subject": "start_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.world",)}})
-        print("World View notification:", world_notification)
-        #self._streamVideo()
+        topic = "hmd_streaming." + device
+        notification = self._notify({"subject": "start_eye_plugin", "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
+        print("Notification for {}: {}".format(device, notification))
+        self._streamVideo(device)
     
     def get_pub_socket(self):
         return self.pub_socket
@@ -72,43 +75,30 @@ class VideoBackEnd():
         self.frame = 30 if frame is None else frame
 
 
-    def _streamVideo(self):
-        intrinsics = [
-                        [0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0],
-                    ]
-        index = 1
+    def _streamVideo(self, device):
+        frame_index = 1
         fps = 0
         counter = 0
         cap = cv2.VideoCapture(0)
         cap.set(3, self.width)
         cap.set(4, self.height)
         cap.set(5, self.frame)
+        payload = Payload(device, self.width, self.height)
         start_time = time.time()
         try:
             while True:
-                payload = {}
                 _, image = cap.read()
-                height, width, _ = image.shape
-                payload["timestamp"] = time.time()
-                payload["__raw_data__"] = [image]
-                payload["topic"] = "hmd_streaming.world"
-                payload["width"] = width
-                payload["height"] = height
-                payload["index"] = index
-                payload["format"] = "rgb"
-                payload["projection_matrix"] = intrinsics
-                self.pub_socket.send(payload)
+                payload.setPayloadParam(time.time(), image, frame_index)
+                self.pub_socket.send(payload.get())
                 seconds = time.time() - start_time
                 if seconds > 1:
                     fps = counter
                     counter = 0
                     start_time = time.time()
-                outstr = "Frames: {}, FPS: {}".format(index, fps) 
+                outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
                 sys.stdout.write('\r'+ outstr)
                 counter = counter + 1
-                index = index + 1
+                frame_index = frame_index + 1
         except (KeyboardInterrupt, SystemExit):
             print('Exit due to keyboard interrupt')
         except Exception as ex:
