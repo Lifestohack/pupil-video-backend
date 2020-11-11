@@ -2,6 +2,7 @@ import zmq
 import cv2
 import time
 import traceback
+import sys
 from zmq_tools import *
 
 class VideoBackEnd():
@@ -36,6 +37,7 @@ class VideoBackEnd():
 
         # Step 3
         pub_port = self.pupil_remote.recv_string()
+        print("Publishing to port: {}".format(pub_port))
 
         # Step 4
         icp_pub_add = "tcp://{}:{}".format(ip, pub_port)
@@ -66,7 +68,7 @@ class VideoBackEnd():
         self.pupil_remote.send(payload)
         return self.pupil_remote.recv_string()
 
-    def setVideoCaptureParam(self, source=0, height=240, width=320, frame=32):
+    def setVideoCaptureParam(self, source=0, height=240, width=320, frame=30):
         if source is None:
             print("Using default camera source: 0")
         self.source = 0 if source is None else source
@@ -82,9 +84,13 @@ class VideoBackEnd():
                         [0.0, 0.0, 0.0],
                     ]
         index = 1
+        fps = 0
+        counter = 0
         cap = cv2.VideoCapture(0)
         cap.set(3, self.width)
         cap.set(4, self.height)
+        cap.set(5, self.frame)
+        start_time = time.time()
         try:
             while True:
                 payload = {}
@@ -99,7 +105,14 @@ class VideoBackEnd():
                 payload["format"] = "rgb"
                 payload["projection_matrix"] = intrinsics
                 self.pub_socket.send(payload)
-                print(index)
+                seconds = time.time() - start_time
+                if seconds > 1:
+                    fps = counter
+                    counter = 0
+                    start_time = time.time()
+                outstr = "Frames: {}, FPS: {}".format(index, fps) 
+                sys.stdout.write('\r'+ outstr)
+                counter = counter + 1
                 index = index + 1
         except (KeyboardInterrupt, SystemExit):
             print('Exit due to keyboard interrupt')
@@ -109,3 +122,4 @@ class VideoBackEnd():
             traceback.print_exc()
         finally:
             cap.release()
+            sys.exit(0)
