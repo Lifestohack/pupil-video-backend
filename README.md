@@ -16,7 +16,7 @@ from video_backend import *
 ip = "127.0.0.1"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
 pupilbackend = VideoBackEnd(ip, port)
-pupilbackend.start()
+pupilbackend.start()  # default is "world". Other options are "eye0" and "eye1".
 ```
 If no ip address or port is provided then 127.0.0.1 and 50020 is used respectively by default.
 
