@@ -48,6 +48,7 @@ class VideoBackEnd():
 
     def start(self, device, videosource=0):
         # Start the plugin
+        # device = "eye0" or device = "eye1" or device = "world"
         topic = "hmd_streaming." + device
         plugin_type = ""
         if device == "world":
@@ -56,7 +57,7 @@ class VideoBackEnd():
             plugin_type = "start_eye_plugin"
         else:
             raise ValueError("Options for devices are: world, eye0, eye1")
-        notification = self._notify({"subject": plugin_type, "target": "eye0", "name": "HMD_Streaming_Source", "args": {"topics": (topic,), "target":device}})
+        notification = self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
         print("Notification for {}: {}".format(device, notification))
         if videosource is not None:
             self.videosource = videosource
