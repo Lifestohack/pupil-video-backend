@@ -49,8 +49,10 @@ class VideoBackEnd():
         # Start the plugin
         world_notification = self._notify({"subject": "start_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.world",)}})
         print("World View notification:", world_notification)
-        self._streamVideo()
-
+        #self._streamVideo()
+    
+    def get_pub_socket(self):
+        return self.pub_socket
 
     def _notify(self, notification):
         # send notification:
