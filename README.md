@@ -21,3 +21,5 @@ pupilbackend.start()
 If no ip address or port is provided then 127.0.0.1 and 50020 is used respectively by default.
 
 OpenCV is used to get the frames from the camera source. By default camera source 0 is used but the source index can be changed by calling setVideoCaptureParam function. You can also set other parameters like width, height and fps.
+
+If you want to use your own video source instead of built in OpenCV VideoCapture function then see the example at publish_to_pupil.py.
