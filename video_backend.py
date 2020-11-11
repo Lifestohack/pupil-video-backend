@@ -45,18 +45,11 @@ class VideoBackEnd():
         self.setVideoCaptureParam()
 
 
-    def start(self, world=True, eye0=False, eye1=False):
+    def start(self):
         # Start the plugin
-        if world == True:
-            world_notification = self._notify({"subject": "start_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.world",)}})
-            print("World View notification:", world_notification)
-            self._streamVideo()
-        if eye0 == True:
-            self._notify({"subject": "start_eye_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.eye0",)}})
-            print("World View notification:", world_notification)
-        if eye1 == True:
-            self._notify({"subject": "start_eye_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.eye1",)}})
-            print("World View notification:", world_notification)
+        world_notification = self._notify({"subject": "start_plugin", "name": "HMD_Streaming_Source", "args": {"topics": ("hmd_streaming.world",)}})
+        print("World View notification:", world_notification)
+        self._streamVideo()
 
 
     def _notify(self, notification):
