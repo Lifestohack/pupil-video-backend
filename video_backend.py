@@ -46,7 +46,7 @@ class VideoBackEnd():
         self.pub_socket = Msg_Streamer(ctx, icp_pub_add, hwm=hwm)
 
 
-    def start(self, device, videosource=0):
+    def start(self, device="world", videosource=0):
         # Start the plugin
         # device = "eye0" or device = "eye1" or device = "world"
         topic = "hmd_streaming." + device
