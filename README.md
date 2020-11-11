@@ -18,6 +18,17 @@ port = "50020"      # same as in the pupil remote gui
 pupilbackend = VideoBackEnd(ip, port)
 pupilbackend.start()
 ```
+# Start from terminal
+```sh
+python main.py [-h] [-d DEVICE] [-i IP] [-p PORT] [-vs VIDEOSOURCE]
+```
+Example:
+```sh
+python main.py -d world -i 127.0.0.1 -p 50020 -vs 0
+# -d, -i, -p and -vsare optional. By default world view is streamed using videosource with Id 0.
+# -d has three options: world or eye0 or eye1
+```
+
 If no ip address or port is provided then 127.0.0.1 and 50020 is used respectively by default.
 
 OpenCV is used to get the frames from the camera source. By default camera source 0 is used but the source index can be changed by calling setVideoCaptureParam function. You can also set other parameters like width, height and fps.
