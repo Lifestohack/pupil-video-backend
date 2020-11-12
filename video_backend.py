@@ -74,8 +74,8 @@ class VideoBackEnd():
             plugin_type = "start_eye_plugin"
         else:
             raise ValueError("Options for devices are: world, eye0, eye1")
-        self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
         if self.isEyeProcessOpened(device[-1]):
+            self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
             if videosource is not None:
                 self.videosource = videosource
                 self.setVideoCaptureParam(videosource=self.videosource)
