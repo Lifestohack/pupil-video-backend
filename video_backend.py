@@ -46,6 +46,22 @@ class VideoBackEnd():
         icp_pub_add = "tcp://{}:{}".format(ip, pub_port)
         self.pub_socket = Msg_Streamer(ctx, icp_pub_add, hwm=hwm)
 
+        # subscribe to notification
+        self.pupil_remote.send_string("SUB_PORT")
+        sub_port = self.pupil_remote.recv_string()
+        self.subscriber = ctx.socket(zmq.SUB)
+        self.subscriber.connect(f'tcp://{ip}:{sub_port}')
+        self.subscriber.subscribe('notify.eye_process.')  # receive all gaze messages
+        print("Listening to port: {}".format(sub_port))
+
+    def isEyeProcessOpened(self, eye_id):
+        # Blocking
+        while True:
+            topic, payload = self.subscriber.recv_multipart()
+            message = serializer.loads(payload)
+            if b"eye_process.started" == message[b"subject"] and eye_id == str(message[b"eye_id"]):
+                return True
+
 
     def start(self, device="world", videosource=0):
         # Start the plugin
@@ -58,12 +74,12 @@ class VideoBackEnd():
             plugin_type = "start_eye_plugin"
         else:
             raise ValueError("Options for devices are: world, eye0, eye1")
-        notification = self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
-        print("Notification for {}: {}".format(device, notification))
-        if videosource is not None:
-            self.videosource = videosource
-            self.setVideoCaptureParam(videosource=self.videosource)
-            self._streamVideo(device)
+        self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
+        if self.isEyeProcessOpened(device[-1]):
+            if videosource is not None:
+                self.videosource = videosource
+                self.setVideoCaptureParam(videosource=self.videosource)
+                self._streamVideo(device)
     
     def get_pub_socket(self):
         return self.pub_socket
