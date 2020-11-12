@@ -5,6 +5,7 @@ import traceback
 import sys
 from zmq_tools import Msg_Streamer
 from payload import Payload
+import msgpack as serializer
 
 class VideoBackEnd():
     def __init__(self, ip=None, port=None, hwm=None):
