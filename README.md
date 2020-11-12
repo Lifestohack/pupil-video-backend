@@ -9,9 +9,9 @@ git clone https://github.com/Lifestohack/pupil-video-backend.git
 cd pupil-video-backend
 ```
 
-# Usage
+## Usage
 ```sh
-from video_backend import *
+from video_backend import VideoBackEnd
 
 ip = "127.0.0.1"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
@@ -24,7 +24,7 @@ OpenCV is used to get the frames from the camera source. By default camera sourc
 
 If you want to use your own video source instead of built in OpenCV VideoCapture function then see the example at publish_to_pupil.py. It reads the RGB frames from the Raspberry pi camera connected through CSI and publishes it.
 
-# Start from terminal
+## Start from terminal
 ```sh
 python main.py [-h] [-d DEVICE] [-i IP] [-p PORT] [-vs VIDEOSOURCE]
 ```
