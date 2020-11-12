@@ -3,8 +3,8 @@ import cv2
 import time
 import traceback
 import sys
-from zmq_tools import *
-from payload import *
+from zmq_tools import Msg_Streamer
+from payload import Payload
 
 class VideoBackEnd():
     def __init__(self, ip=None, port=None, hwm=None):

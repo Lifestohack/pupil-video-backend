@@ -1,11 +1,11 @@
-from video_backend import *
+from video_backend import VideoBackEnd
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 from picamera.array import PiYUVArray
 import numpy as np
 import threading
 import sys
-from payload import *
+from payload import Payload
 
 # Helper class implementing an IO deamon thread
 class StartThreadToStream:
