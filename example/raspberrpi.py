@@ -40,13 +40,16 @@ class StartThreadToStream:
 ip = "127.0.0.1"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
 device = "world"
+
+# initialize the stream
 backend = VideoBackEnd(ip, port)
 
 def streamVideo():
     resolution =  (320, 240)
     framerate = 90
     pub_socket = backend.get_pub_socket()
-    # initialize the stream
+    # Make sure to set up raspberry pi camera
+    # More information here: https://www.raspberrypi.org/documentation/configuration/camera.md
     camera = PiCamera()
     time.sleep(2.0)  # Warmup time; needed by PiCamera on some RPi's
     # set camera parameters
@@ -57,14 +60,13 @@ def streamVideo():
     camera.rotation = 180    
     rawCapture = PiRGBArray(camera, size=resolution)
     #rawCapture = PiYUVArray(camera, size=resolution)
-    stream = camera.capture_continuous(rawCapture,
-        format="rgb", use_video_port=True)
+    stream = camera.capture_continuous(rawCapture, format="rgb", use_video_port=True)
     frame_counter_per_sec = 0
     frame_index = 1
-    start_time = time.time()
     #streamimage = StartThreadToStream(pub_socket)
     payload = Payload(device, resolution[0], resolution[1])
     fps = 0
+    start_time = time.time()
     try:
         for f in stream:
             if backend.is_publishable():
@@ -73,7 +75,7 @@ def streamVideo():
                 frame = f.array
                 payload.setPayloadParam(time.time(), frame, frame_index)
                 #streamimage.dataready(payload.get())    #   give it to StartThreadToStream to publish
-                pub_socket.send(payload.get())         #   publish here
+                pub_socket.send(payload.get())           #   publish here
                 seconds = time.time() - start_time
                 if seconds > 1:
                     fps = frame_counter_per_sec
@@ -96,8 +98,5 @@ def streamVideo():
         #streamimage.close()
         camera.close()
 
-def main():
-    backend.start(device, callback=streamVideo)
-
 if __name__ == "__main__":
-    main()
+    backend.start(device, callback=streamVideo)
