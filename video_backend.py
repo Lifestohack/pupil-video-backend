@@ -6,17 +6,23 @@ import sys
 from zmq_tools import Msg_Streamer
 from payload import Payload
 import msgpack as serializer
+import threading
 
 class VideoBackEnd():
     def __init__(self, ip=None, port=None, hwm=None):
-
-        if ip is None:
-            ip = "127.0.0.1"
-        if port is None:
-            port = "50020"  
+        self.ip = ip
+        self.port = port
+        self.hwm = hwm
+        if self.ip is None:
+            self.ip = "127.0.0.1"
+        if self.port is None:
+            self.port = "50020"  
+        self.start_publishing = False
+        self.device = "world"
+        self.init()
         
-        icp_req_add = "tcp://{}:{}".format(ip, port)
-
+    def init(self):
+        icp_req_add = "tcp://{}:{}".format(self.ip, self.port)
         # Pupil Software listens to the IPC backend. 
         # The backend is like an echo chamber. 
         # You can either yell something into it, or listen what comes out. 
@@ -36,52 +42,81 @@ class VideoBackEnd():
 
         # Step 2
         self.pupil_remote.send_string("PUB_PORT")
-        print("Waiting for the publish port from Pupil Capture software.")
+        print("Waiting for the PUB_PORT from Pupil Capture software.")
 
         # Step 3
         pub_port = self.pupil_remote.recv_string()
         print("Publishing to port: {}".format(pub_port))
 
         # Step 4
-        icp_pub_add = "tcp://{}:{}".format(ip, pub_port)
-        self.pub_socket = Msg_Streamer(ctx, icp_pub_add, hwm=hwm)
+        icp_pub_add = "tcp://{}:{}".format(self.ip, pub_port)
+        self.pub_socket = Msg_Streamer(ctx, icp_pub_add, hwm=self.hwm)
 
         # subscribe to notification
         self.pupil_remote.send_string("SUB_PORT")
         sub_port = self.pupil_remote.recv_string()
+        print("Waiting for the SUB_PORT from Pupil Capture software.")
         self.subscriber = ctx.socket(zmq.SUB)
-        self.subscriber.connect(f'tcp://{ip}:{sub_port}')
-        self.subscriber.subscribe('notify.eye_process.')  # receive all gaze messages
+        self.subscriber.connect(f'tcp://{self.ip}:{sub_port}')
+        self.subscriber.subscribe('notify.')  # receive all gaze messages
         print("Listening to port: {}".format(sub_port))
 
-    def isEyeProcessOpened(self, eye_id):
-        # Blocking
-        while True:
-            topic, payload = self.subscriber.recv_multipart()
+    def _listenAndStartStreaming(self):
+        if self.device == "world":
+            self._threadedStream()
+        listen_to_notification = True
+        while listen_to_notification:
+            _, payload = self.subscriber.recv_multipart()
             message = serializer.loads(payload)
-            if b"eye_process.started" == message[b"subject"] and eye_id == str(message[b"eye_id"]):
-                return True
+            print(message)
+            if b"eye_process.started" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
+                # If thread has not started then start the thread
+                if self.start_publishing == False:
+                    self._threadedStream()
+            elif b"eye_process.stopped" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
+                self.start_publishing = False
+            elif b"world_process.stopped" == message[b"subject"]:
+                self.start_publishing = False
+                listen_to_notification = False
+        print("Pupil capture software closed.")
+        self.init()
+        self.start(self.device, self.videosource)
 
+    def _threadedStream(self):
+        thread = threading.Thread(target=self._streamVideo, args=())
+        thread.daemon = True
+        self.start_publishing = True
+        self.setVideoCaptureParam(videosource=self.videosource)
+        thread.start()
 
     def start(self, device="world", videosource=0):
-        # Start the plugin
         # device = "eye0" or device = "eye1" or device = "world"
-        topic = "hmd_streaming." + device
+        self.device = device
+        self.videosource = videosource
+        if self.device is None:
+            self.device = "world"
         plugin_type = ""
-        if device == "world":
+        if self.device == "world":
             plugin_type = "start_plugin"
-        elif device == "eye0" or device == "eye1":
+        elif self.device == "eye0" or self.device == "eye1":
             plugin_type = "start_eye_plugin"
         else:
             raise ValueError("Options for devices are: world, eye0, eye1")
-        if self.isEyeProcessOpened(device[-1]):
-            self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
-            if videosource is not None:
-                self.videosource = videosource
-                self.setVideoCaptureParam(videosource=self.videosource)
-                self._streamVideo(device)
-    
+        topic = "hmd_streaming." + device
+        # Start the plugin
+        self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
+        self._listenAndStartStreaming()
+
+        # # If videosource is none that means you are implementing your own source. Call get_pub_socket to get Message streamer.
+        # # Pupil capture software is already notified to start plugin
+        # if videosource is not None:
+        #     self.videosource = videosource
+        #     self.setVideoCaptureParam(videosource=self.videosource)
+        #     self._streamVideo(device)
+
     def get_pub_socket(self):
+        # returns Msg_Streamer
+        # call get_pun_socket(payload)
         return self.pub_socket
 
     def _notify(self, notification):
@@ -101,8 +136,8 @@ class VideoBackEnd():
         self.width = 320 if width is None else width
         self.frame = 30 if frame is None else frame
 
-
-    def _streamVideo(self, device):
+    def _streamVideo(self):
+        print("Starting the stream for {}".format(self.device))
         frame_index = 1
         fps = 0
         counter = 0
@@ -110,10 +145,10 @@ class VideoBackEnd():
         cap.set(3, self.width)
         cap.set(4, self.height)
         cap.set(5, self.frame)
-        payload = Payload(device, self.width, self.height)
+        payload = Payload(self.device, self.width, self.height)
         start_time = time.time()
         try:
-            while True:
+            while self.start_publishing == True:
                 _, image = cap.read()
                 payload.setPayloadParam(time.time(), image, frame_index)
                 self.pub_socket.send(payload.get())
@@ -133,5 +168,6 @@ class VideoBackEnd():
             print('Traceback error:', ex)
             traceback.print_exc()
         finally:
+            print("\n" + "Stopping the stream for {}".format(self.device))
             cap.release()
             sys.exit(0)
