@@ -19,9 +19,9 @@ class VideoBackEnd():
             self.port = "50020"  
         self.start_publishing = False
         self.device = "world"
-        self.init()
+        self._initialize()
         
-    def init(self):
+    def _initialize(self):
         icp_req_add = "tcp://{}:{}".format(self.ip, self.port)
         # Pupil Software listens to the IPC backend. 
         # The backend is like an echo chamber. 
@@ -63,6 +63,10 @@ class VideoBackEnd():
 
     def _listenAndStartStreaming(self):
         if self.device == "world":
+            # If videosource is none that means you are implementing your own source. 
+            # Call get_pub_socket() to get Message streamer.
+            # Call  is_publishable() before publish each payload.
+            # Pupil capture software is already notified to start plugin.
             self._threadedStream()
         listen_to_notification = True
         while listen_to_notification:
@@ -79,7 +83,7 @@ class VideoBackEnd():
                 self.start_publishing = False
                 listen_to_notification = False
         print("Pupil capture software closed.")
-        self.init()
+        self._initialize()
         self.start(self.device, self.videosource)
 
     def _threadedStream(self):
@@ -107,17 +111,15 @@ class VideoBackEnd():
         self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
         self._listenAndStartStreaming()
 
-        # # If videosource is none that means you are implementing your own source. Call get_pub_socket to get Message streamer.
-        # # Pupil capture software is already notified to start plugin
-        # if videosource is not None:
-        #     self.videosource = videosource
-        #     self.setVideoCaptureParam(videosource=self.videosource)
-        #     self._streamVideo(device)
-
     def get_pub_socket(self):
         # returns Msg_Streamer
         # call get_pun_socket(payload)
         return self.pub_socket
+
+    def is_publishable(self):
+        # loop over is_publishable to publish each payload.
+        # It is needed because if eye process or world process is stopped then it doesnot make sense to stream video
+        return self.start_publishing
 
     def _notify(self, notification):
         # send notification:
