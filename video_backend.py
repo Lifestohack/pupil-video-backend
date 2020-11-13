@@ -61,17 +61,14 @@ class VideoBackEnd():
         self.subscriber.subscribe('notify.')  # receive all gaze messages
         print("Listening to port: {}".format(sub_port))
 
-    def _listenAndStartStreaming(self):
+    def _listenAndStartStreaming(self, callback):
         if self.device == "world":
-            if self.videosource is not None:
-                # If videosource is none that means you are implementing your own source. 
-                # Call get_pub_socket() to get Message streamer.
-                # Call  is_publishable() before publish each payload.
-                # Pupil capture software is already notified to start plugin.
-                self.start_publishing = True
-                self._threadedStream()
-            else:
-                self.start_publishing = True
+            # If videosource is none that means you are implementing your own source. 
+            # Call get_pub_socket() to get Message streamer.
+            # Call  is_publishable() before publish each payload.
+            # Pupil capture software is already notified to start plugin.
+            self.start_publishing = True
+            self._threadedStream(callback)             
         listen_to_notification = True
         while listen_to_notification:
             _, payload = self.subscriber.recv_multipart()
@@ -80,9 +77,8 @@ class VideoBackEnd():
             if b"eye_process.started" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
                 # If thread has not started then start the thread
                 if self.start_publishing == False:
-                    if self.videosource is not None:
-                        self.start_publishing = True
-                        self._threadedStream()
+                    self.start_publishing = True
+                    self._threadedStream(callback)
             elif b"eye_process.stopped" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
                 self.start_publishing = False
             elif b"world_process.stopped" == message[b"subject"]:
@@ -92,16 +88,20 @@ class VideoBackEnd():
         self._initialize()
         self.start(self.device, self.videosource)
 
-    def _threadedStream(self):
-        thread = threading.Thread(target=self._streamVideo, args=())
+    def _threadedStream(self, callback):
+        thread = threading.Thread(target=callback, args=())
         thread.daemon = True
         self.setVideoCaptureParam(videosource=self.videosource)
         thread.start()
 
-    def start(self, device="world", videosource=0):
+    def start(self, device="world", videosource=0, callback=None):
         # device = "eye0" or device = "eye1" or device = "world"
         self.device = device
         self.videosource = videosource
+        if videosource is None and callback is None:
+            raise ValueError("Please provide callback if you want to use your own video source.")
+        if callback is None:
+            self.videosource = None
         if self.device is None:
             self.device = "world"
         plugin_type = ""
@@ -114,7 +114,7 @@ class VideoBackEnd():
         topic = "hmd_streaming." + device
         # Start the plugin
         self._notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
-        self._listenAndStartStreaming()
+        self._listenAndStartStreaming(self._streamVideo if callback is None else callback)
 
     def get_pub_socket(self):
         # returns Msg_Streamer

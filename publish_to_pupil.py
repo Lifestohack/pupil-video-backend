@@ -36,21 +36,13 @@ class StartThreadToStream:
     def close(self):
         self._stop = True
 
+
 ip = "127.0.0.1"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
 device = "world"
 backend = VideoBackEnd(ip, port)
 
-def processNotification():
-    thread = threading.Thread(target=run, args=())
-    thread.daemon = True
-    thread.start()
-
-def run():
-    backend.start(device=device, videosource=None)
-
-def main():
-    processNotification()
+def streamVideo():
     resolution =  (320, 240)
     framerate = 90
     pub_socket = backend.get_pub_socket()
@@ -103,6 +95,9 @@ def main():
     finally:
         #streamimage.close()
         camera.close()
+
+def main():
+    backend.start(device, callback=streamVideo)
 
 if __name__ == "__main__":
     main()
