@@ -6,6 +6,7 @@ import numpy as np
 import threading
 import sys
 from payload import Payload
+import time, traceback
 
 # Helper class implementing an IO deamon thread
 class StartThreadToStream:
@@ -35,13 +36,23 @@ class StartThreadToStream:
     def close(self):
         self._stop = True
 
-if __name__ == "__main__":
-    ip = "127.0.0.1"    # ip address of remote pupil or localhost
-    port = "50020"      # same as in the pupil remote gui
+ip = "127.0.0.1"    # ip address of remote pupil or localhost
+port = "50020"      # same as in the pupil remote gui
+device = "world"
+backend = VideoBackEnd(ip, port)
+
+def processNotification():
+    thread = threading.Thread(target=run, args=())
+    thread.daemon = True
+    thread.start()
+
+def run():
+    backend.start(device=device, videosource=None)
+
+def main():
+    processNotification()
     resolution =  (320, 240)
     framerate = 90
-    backend = VideoBackEnd(ip, port)
-    backend.start()
     pub_socket = backend.get_pub_socket()
     # initialize the stream
     camera = PiCamera()
@@ -59,27 +70,30 @@ if __name__ == "__main__":
     frame_counter_per_sec = 0
     frame_index = 1
     start_time = time.time()
-    streamimage = StartThreadToStream(pub_socket)
-    payload = Payload("world", resolution[0], resolution[1])
+    #streamimage = StartThreadToStream(pub_socket)
+    payload = Payload(device, resolution[0], resolution[1])
     fps = 0
     try:
         for f in stream:
-            # grab the frame from the stream and clear the stream in
-            # preparation for the next frame
-            frame = f.array
-            payload.setPayloadParam(time.time(), frame, frame_index)
-            streamimage.dataready(payload.get())    #   give it to StartThreadToStream to publish
-            #pub_socket.send(payload.get())         #   publish here
-            seconds = time.time() - start_time
-            if seconds > 1:
-                fps = frame_counter_per_sec
-                frame_counter_per_sec = 0
-                start_time = time.time()
-            outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
-            sys.stdout.write('\r'+ outstr)
-            frame_counter_per_sec = frame_counter_per_sec + 1
-            frame_index = frame_index + 1
-            rawCapture.truncate(0)
+            if backend.is_publishable():
+                # grab the frame from the stream and clear the stream in
+                # preparation for the next frame
+                frame = f.array
+                payload.setPayloadParam(time.time(), frame, frame_index)
+                #streamimage.dataready(payload.get())    #   give it to StartThreadToStream to publish
+                pub_socket.send(payload.get())         #   publish here
+                seconds = time.time() - start_time
+                if seconds > 1:
+                    fps = frame_counter_per_sec
+                    frame_counter_per_sec = 0
+                    start_time = time.time()
+                outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
+                sys.stdout.write('\r'+ outstr)
+                frame_counter_per_sec = frame_counter_per_sec + 1
+                frame_index = frame_index + 1
+                rawCapture.truncate(0)
+            else:
+                break
     except (KeyboardInterrupt, SystemExit):
         print('Exit due to keyboard interrupt')
     except Exception as ex:
@@ -87,6 +101,8 @@ if __name__ == "__main__":
         print('Traceback error:', ex)
         traceback.print_exc()
     finally:
-        streamimage.close()
+        #streamimage.close()
         camera.close()
-        sys.exit(0)
+
+if __name__ == "__main__":
+    main()

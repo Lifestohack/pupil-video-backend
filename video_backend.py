@@ -63,11 +63,15 @@ class VideoBackEnd():
 
     def _listenAndStartStreaming(self):
         if self.device == "world":
-            # If videosource is none that means you are implementing your own source. 
-            # Call get_pub_socket() to get Message streamer.
-            # Call  is_publishable() before publish each payload.
-            # Pupil capture software is already notified to start plugin.
-            self._threadedStream()
+            if self.videosource is not None:
+                # If videosource is none that means you are implementing your own source. 
+                # Call get_pub_socket() to get Message streamer.
+                # Call  is_publishable() before publish each payload.
+                # Pupil capture software is already notified to start plugin.
+                self.start_publishing = True
+                self._threadedStream()
+            else:
+                self.start_publishing = True
         listen_to_notification = True
         while listen_to_notification:
             _, payload = self.subscriber.recv_multipart()
@@ -76,7 +80,9 @@ class VideoBackEnd():
             if b"eye_process.started" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
                 # If thread has not started then start the thread
                 if self.start_publishing == False:
-                    self._threadedStream()
+                    if self.videosource is not None:
+                        self.start_publishing = True
+                        self._threadedStream()
             elif b"eye_process.stopped" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
                 self.start_publishing = False
             elif b"world_process.stopped" == message[b"subject"]:
@@ -89,7 +95,6 @@ class VideoBackEnd():
     def _threadedStream(self):
         thread = threading.Thread(target=self._streamVideo, args=())
         thread.daemon = True
-        self.start_publishing = True
         self.setVideoCaptureParam(videosource=self.videosource)
         thread.start()
 
