@@ -22,6 +22,10 @@ If no ip address or port is provided then 127.0.0.1 and 50020 is used respective
 
 OpenCV is used to get the frames from the camera source. By default camera source 0 is used but the source index can be changed by calling setVideoCaptureParam function. You can also set other parameters like width, height and fps.
 
+It is listening to the notification published by Pupil capture software. It will not start publishling untill and unless pupil capture software is running. If eye0 or eye1 is requested then make sure to open the window for detecting the eye0 or eye1 is also open.
+
+Run this program three times with different video sources if you want to have world, eye0 and eye1 view on your Pupil capture software.
+
 ## Start from terminal
 ```sh
 python main.py [-h] [-d DEVICE] [-i IP] [-p PORT] [-vs VIDEOSOURCE]
@@ -35,4 +39,4 @@ python main.py -d world -i 127.0.0.1 -p 50020 -vs 0
 
 ## Callback | Custom Video Source
 
-If you want to use your own video source instead of built in OpenCV VideoCapture function then see the example folder for raspberrpi. It reads the RGB frames from the Raspberry pi camera connected through CSI and publishes it. Basically you need to call the start(callback=yourcustomfunction) function with callback. You can then send payload if the pupil capture software is running your network. Call is_publishable() to know if you can start publishing the payload or not.
+If you want to use your own video source instead of built in OpenCV VideoCapture function then see the example folder for raspberrpi. It reads the RGB frames from the Raspberry pi camera connected through CSI and publishes it. Basically you need to call the start(callback=yourcustomfunction) function with callback. You can then start sending payload on yourcustomfunction(). if the pupil capture software is running your network. Call is_publishable() to know if you can start publishing the payload or not.
