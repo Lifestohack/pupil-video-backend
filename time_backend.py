@@ -1,4 +1,4 @@
-from time import time, sleep
+from time import time, sleep, monotonic
 
 class TimeManager():
 
@@ -14,15 +14,17 @@ class TimeManager():
         self.pupil_time = self.pupil_remote.recv_string()
         return self.pupil_time
 
-    def get_latency(self):
-        latencys = []
+    def get_offset(self):
+        times = []
         for _ in range(100):
-            t0 = time()
+            t0 = monotonic()
             t1 = self.get_pupil_time()
-            t2 = time()
-            latency = (t2 - t0) / 2     # one-way latency. Same latency is assumed both ways
-            latencys.append(latency)
-        return min(latencys), max(latencys), sum(latencys)/len(latencys)
+            t2 = monotonic() 
+            times.append((t0, t1, t2))
+        offsets = [t0 - ((float(t1) + (t2 - t0) / 2)) for t0, t1, t2 in times]
+        mean_offset = sum(offsets) / len(offsets)
+        offset_jitter = sum([abs(mean_offset - o) for o in offsets]) / len(offsets)
+        return mean_offset, offset_jitter
 
     def sync_time(self):
         """
