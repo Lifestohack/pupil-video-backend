@@ -3,16 +3,11 @@ from time import time, sleep, monotonic
 class TimeManager():
 
     def __init__(self, pupil_remote):
-        self.latency = None
-        self.pupil_time = None
-        self.synced_time = None
         self.pupil_remote = pupil_remote
 
-    
     def get_pupil_time(self):
         self.pupil_remote.send_string('t')
-        self.pupil_time = self.pupil_remote.recv_string()
-        return self.pupil_time
+        return self.pupil_remote.recv_string()
 
     def get_offset(self):
         times = []
@@ -30,8 +25,6 @@ class TimeManager():
         """
         time sync with pupil capture host
         """
-
-        # set value for self.synced_time after sync
         raise NotImplementedError()
 
     def time(self):
