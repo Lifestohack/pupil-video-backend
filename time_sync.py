@@ -1,10 +1,8 @@
 from time import monotonic
 
 class Clock_Follower():
-    """
-    https://github.com/pupil-labs/pupil/blob/master/pupil_src/shared_modules/time_sync_spec.md
 
-    """
+    # https://github.com/pupil-labs/pupil/blob/master/pupil_src/shared_modules/time_sync_spec.md
 
     def __init__(self, pupil_remote, time):
         self.time = time
@@ -26,7 +24,7 @@ class Clock_Follower():
         times.sort(key=lambda t: t[2] - t[0])
         times = times[:int(len(times) * 0.69)]
 
-        # assuming latency on both direction to be same
+        # Assuming latency on both direction to be same.
         offsets = [t0 - ((float(t1) + (t2 - t0) / 2)) for t0, t1, t2 in times]
         mean_offset = sum(offsets) / len(offsets)
         
