@@ -1,6 +1,6 @@
 from time import time, sleep, monotonic
 
-class TimeManager():
+class Clock_Follower():
     """
     Clock follower
     
@@ -51,6 +51,7 @@ class TimeManager():
 
     def get_synced_pupil_time(self, localtime):
         """
-        returns time after sync
+        Returns time after sync.
+        localtime is monotonic as offset was calculated using monotonic.
         """
         return localtime + self.offset
