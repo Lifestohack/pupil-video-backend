@@ -5,6 +5,7 @@ import threading
 from time_sync import Clock_Follower
 from pupil import PupilManager
 import sys
+import log
 import logging
 
 class VideoBackEnd():
@@ -22,6 +23,7 @@ class VideoBackEnd():
     def start(self, device="world", videosource=0, callback=None):
         # device = "eye0" or device = "eye1" or device = "world"
         try:
+            logging.info("Publishing to device:{}".format(device))
             self.device = device
             self.videosource = videosource
             self.callback = callback
@@ -116,12 +118,11 @@ class VideoBackEnd():
             logging.info("Total Published frames: {}, FPS:{}.".format(frame_index, fps))
 
     def setVideoCaptureParam(self, videosource=0, height=240, width=320, frame=30):
-        if videosource is None:
-            logging.info("Using default camera source: 0")
         self.videosource = 0 if videosource is None else videosource
         self.height = 240 if height is None else height
         self.width = 320 if width is None else width
         self.frame = 30 if frame is None else frame
+        logging.info("Using default camera source:{}".format(videosource))
         logging.info("Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(self.height, self.width, self.frame))
 
     def get_msg_streamer(self):

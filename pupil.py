@@ -13,6 +13,7 @@ class PupilManager():
             self.host = "127.0.0.1"
         if self.port is None:
             self.port = "50020"
+        logging.info("Host:{}, Port:{}".format(self.host, self.port))
         self.initialize()
 
     def initialize(self):
