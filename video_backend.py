@@ -39,10 +39,12 @@ class VideoBackEnd():
             elif self.device == "eye0" or self.device == "eye1":
                 plugin_type = "start_eye_plugin"
             else:
-                raise ValueError("Options for devices are: world, eye0, eye1")
+                err = "Options for devices are: world, eye0, eye1"
+                logging.critical(err)
+                raise ValueError(err)
             topic = "hmd_streaming." + self.device
             # Start the plugin
-            self.pupil.notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
+            self.pupil.notify({"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
             self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
         except Exception as ex:
             logging.error(ex)
