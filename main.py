@@ -11,7 +11,7 @@ args = parser.parse_args()
 
 def main(ip, port, device, videosource):
     if ip is None:
-        ip = "127.0.0.1"    # ip address of remote pupil or localhost
+        ip = "192.168.0.188"    # ip address of remote pupil or localhost
     if port is None:
         port = "50020"          # same as in the pupil remote gui
     if device is None:
@@ -19,7 +19,7 @@ def main(ip, port, device, videosource):
     if videosource is None:
         videosource = 0
     pupilbackend = VideoBackEnd(ip, port)
-    pupilbackend.start(device)
+    pupilbackend.start(device, videosource)
 
 if __name__ == "__main__":
     main(args.ip, args.port, args.device, args.videosource)
