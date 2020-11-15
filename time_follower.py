@@ -27,7 +27,8 @@ class TimeManager():
 
     def __init__(self, pupil_remote):
         self.pupil_remote = pupil_remote
-        self.offsets = self.get_offsets()
+        mean_offset, offset_jitter = self.get_offsets()
+        self.offset = mean_offset + offset_jitter
 
     def get_pupil_time(self):
         self.pupil_remote.send_string('t')
@@ -48,8 +49,8 @@ class TimeManager():
         offset_jitter = sum([abs(mean_offset - o) for o in offsets]) / len(offsets)
         return mean_offset, offset_jitter
 
-    def time(self):
+    def get_synced_pupil_time(self, localtime):
         """
         returns time after sync
         """
-        raise NotImplementedError()
+        return localtime + self.offset
