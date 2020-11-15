@@ -1,5 +1,5 @@
 import cv2
-from time import monotonic, time
+from time import monotonic, time, sleep
 import traceback
 from payload import Payload
 import threading
@@ -23,6 +23,7 @@ class VideoBackEnd():
         # device = "eye0" or device = "eye1" or device = "world"
         self.device = device
         self.videosource = videosource
+        self.callback = callback
         if videosource is None and callback is None:
             raise ValueError("Please provide callback if you want to use your own video source.")
         if callback is None:
@@ -39,7 +40,7 @@ class VideoBackEnd():
         topic = "hmd_streaming." + device
         # Start the plugin
         self.pupil.notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
-        self._listenAndStartStreaming(self._streamVideo if callback is None else callback)
+        self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
 
     def _threadedStream(self, callback):
         thread = threading.Thread(target=callback, args=())
@@ -68,10 +69,12 @@ class VideoBackEnd():
             elif b"world_process.stopped" == message[b"subject"]:
                 self.start_publishing = False
                 listen_to_notification = False
+                sleep(1)
                 self.pupil.close()
+        sleep(1)
         print("Pupil capture software closed.")
         self.initialize()
-        self.start(self.device, self.videosource)
+        self.start(self.device, self.videosource, self.callback)
 
     def _streamVideo(self):
         print("Starting the stream for {}".format(self.device))
