@@ -2,27 +2,8 @@ from time import monotonic
 
 class Clock_Follower():
     """
-    Clock follower
-    
     https://github.com/pupil-labs/pupil/blob/master/pupil_src/shared_modules/time_sync_spec.md
 
-    The clock follower calculates its clock's offset and offset-jitter regularly in the following manner:
-
-    Open a TCP connection to the time service.
-    Repeat the following steps 60 times:
-        Measure the follower's current timestamp t0
-        Send sync to the clock master
-        Receive the clock master's response as t1 and convert it into a float
-        Measure the follower's current timestamp as t2
-        Store entry t0, t1, t2
-    Sort entries by roundtrip time (t2 - t0) in ascending order
-    Remove last 30% entries, i.e. remove outliers
-    Calculate offset for each entry: t0 - (t1 + (t2 - t0) / 2)
-    Calculate mean offset
-    Calculate offset variance
-    Use mean offset as offset and clock variance as offset jitter
-    Adjust the follower's clock according to the offset and the offset jitter
-    
     """
 
     def __init__(self, pupil_remote, time):
