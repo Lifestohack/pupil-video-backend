@@ -1,4 +1,4 @@
-from time import time, sleep, monotonic
+from time import monotonic
 
 class Clock_Follower():
     """
