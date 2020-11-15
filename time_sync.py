@@ -10,15 +10,11 @@ class Clock_Follower():
         mean_offset, offset_jitter = self.get_offsets()
         self.offset = abs(mean_offset) + abs(offset_jitter)
 
-    def get_pupil_time(self):
-        self.pupil_remote.send_string('t')
-        return self.pupil_remote.recv_string()
-
     def get_offsets(self):
         times = []
         for _ in range(60):
             t0 = self.time()
-            t1 = self.get_pupil_time()
+            t1 = self.pupil_remote.get_pupil_time()
             t2 = self.time()
             times.append((t0, t1, t2))
         times.sort(key=lambda t: t[2] - t[0])

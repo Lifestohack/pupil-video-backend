@@ -5,7 +5,6 @@ from payload import Payload
 import threading
 from time_sync import Clock_Follower
 from pupil import PupilManager
-import msgpack as serializer
 import sys
 
 class VideoBackEnd():
@@ -18,7 +17,6 @@ class VideoBackEnd():
     
     def initialize(self):
         self.pupil = PupilManager(self.host, self.port)
-        self.subscriber = self.pupil.get_subscriber()
         self.msg_streamer = self.pupil.get_msg_streamer()
 
     def start(self, device="world", videosource=0, callback=None):
@@ -59,9 +57,7 @@ class VideoBackEnd():
             self._threadedStream(callback)             
         listen_to_notification = True
         while listen_to_notification:
-            _, payload = self.subscriber.recv_multipart()
-            message = serializer.loads(payload)
-            print(message)
+            message = self.pupil.get_notification()
             if b"eye_process.started" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
                 # If thread has not started then start the thread
                 if self.start_publishing == False:

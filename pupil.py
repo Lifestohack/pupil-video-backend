@@ -60,12 +60,19 @@ class PupilManager():
     def get_msg_streamer(self):
         return self.msg_streamer
 
-    def get_subscriber(self):
-        return self.subscriber
+    def get_notification(self):
+        _, payload = self.subscriber.recv_multipart()
+        message = serializer.loads(payload)
+        print(message)
+        return message
 
     def get_pupil_remote(self):
         return self.pupil_remote
 
+    def get_pupil_time(self):
+        self.pupil_remote.send_string('t')
+        return self.pupil_remote.recv_string()
+        
     def notify(self, notification):
         # send notification:
         """Sends ``notification`` to Pupil Remote"""
