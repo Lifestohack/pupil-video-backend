@@ -2,6 +2,7 @@ import zmq
 from time import monotonic
 from zmq_tools import Msg_Streamer
 import msgpack as serializer
+import logging
 
 class PupilManager():
     def __init__(self, host=None, port=None, hwm=None):
@@ -36,6 +37,7 @@ class PupilManager():
         self.pupil_remote.connect(icp_req_add)
 
         # Step 2, 3
+        logging.info("Waiting for Pupil remote.")
         pub_port = self._get_port("PUB_PORT")
         icp_pub_add = "tcp://{}:{}".format(self.host, pub_port)
 
@@ -48,13 +50,13 @@ class PupilManager():
         icp_sub_add = "tcp://{}:{}".format(self.host, sub_port)
         self.subscriber.connect(icp_sub_add)
         self.subscriber.subscribe('notify.')
-        print("Listening at port: {}".format(sub_port))
+        logging.info("Connection Successful.")
 
     def _get_port(self, type):
         self.pupil_remote.send_string(type)
-        print("Waiting for the {} from Pupil Capture software.".format(type))
+        logging.debug("Waiting for the {} from Pupil Capture software.".format(type))
         port = self.pupil_remote.recv_string()
-        print("{}: {}".format(type, port))
+        logging.debug("{}: {}".format(type, port))
         return port
     
     def get_msg_streamer(self):
@@ -63,7 +65,7 @@ class PupilManager():
     def get_notification(self):
         _, payload = self.subscriber.recv_multipart()
         message = serializer.loads(payload)
-        print(message)
+        logging.debug(message)
         return message
 
     def get_pupil_remote(self):
