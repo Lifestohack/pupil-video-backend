@@ -27,8 +27,8 @@ class VideoBackEnd():
             self.device = device
             self.videosource = videosource
             self.callback = callback
-            if videosource is None and callback is None:
-                raise ValueError("Please provide callback if you want to use your own video source.")
+            if self.videosource is None and self.callback is None:
+                self.videosource = 0
             if callback is None:
                 self.videosource = None
             if self.device is None:
@@ -40,7 +40,7 @@ class VideoBackEnd():
                 plugin_type = "start_eye_plugin"
             else:
                 raise ValueError("Options for devices are: world, eye0, eye1")
-            topic = "hmd_streaming." + device
+            topic = "hmd_streaming." + self.device
             # Start the plugin
             self.pupil.notify({"subject": plugin_type, "target": device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
             self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)

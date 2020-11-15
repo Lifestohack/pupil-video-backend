@@ -10,14 +10,6 @@ parser.add_argument('-vs','--videosource',help='Id of the video capturing device
 args = parser.parse_args()
 
 def main(ip, port, device, videosource):
-    if ip is None:
-        ip = "192.168.0.188"    # ip address of remote pupil or localhost
-    if port is None:
-        port = "50020"          # same as in the pupil remote gui
-    if device is None:
-        device = "world"
-    if videosource is None:
-        videosource = 0
     pupilbackend = VideoBackEnd(ip, port)
     pupilbackend.start(device, videosource)
 
