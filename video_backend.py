@@ -1,12 +1,13 @@
 import zmq
 import cv2
-import time
+from time import monotonic, time
 import traceback
 import sys
 from zmq_tools import Msg_Streamer
 from payload import Payload
 import msgpack as serializer
 import threading
+from time_sync import Clock_Follower
 
 class VideoBackEnd():
     def __init__(self, ip=None, port=None, hwm=None):
@@ -39,7 +40,7 @@ class VideoBackEnd():
         # Step 1
         self.pupil_remote = zmq.Socket(ctx, zmq.REQ)
         self.pupil_remote.connect(icp_req_add)
-
+        
         # Step 2
         self.pupil_remote.send_string("PUB_PORT")
         print("Waiting for the PUB_PORT from Pupil Capture software.")
@@ -153,17 +154,17 @@ class VideoBackEnd():
         cap.set(4, self.height)
         cap.set(5, self.frame)
         payload = Payload(self.device, self.width, self.height)
-        start_time = time.time()
+        start_time = time()
         try:
             while self.start_publishing == True:
                 _, image = cap.read()
-                payload.setPayloadParam(time.time(), image, frame_index)
+                payload.setPayloadParam(time(), image, frame_index)
                 self.pub_socket.send(payload.get())
-                seconds = time.time() - start_time
+                seconds = time() - start_time
                 if seconds > 1:
                     fps = counter
                     counter = 0
-                    start_time = time.time()
+                    start_time = time()
                 outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
                 sys.stdout.write('\r'+ outstr)
                 counter = counter + 1
