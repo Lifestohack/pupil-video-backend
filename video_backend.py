@@ -54,6 +54,7 @@ class VideoBackEnd():
         thread.daemon = True
         self.setVideoCaptureParam(videosource=self.videosource)
         thread.start()
+        return thread
 
     def _listenAndStartStreaming(self, callback):
         try:
@@ -63,7 +64,7 @@ class VideoBackEnd():
                 # Call  is_publishable() before publish each payload.
                 # Pupil capture software is already notified to start plugin.
                 self.start_publishing = True
-                self._threadedStream(callback)             
+                thread = self._threadedStream(callback)             
             listen_to_notification = True
             while listen_to_notification:
                 message = self.pupil.get_notification()
@@ -71,13 +72,16 @@ class VideoBackEnd():
                     # If thread has not started then start the thread
                     if self.start_publishing == False:
                         self.start_publishing = True
-                        self._threadedStream(callback)
+                        thread = self._threadedStream(callback)
                 elif b"eye_process.stopped" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
                     self.start_publishing = False
+                    if thread is not None:
+                        thread.join()
                 elif b"world_process.stopped" == message[b"subject"]:
                     self.start_publishing = False
                     listen_to_notification = False
-                    sleep(1)    # sleep here to give time for publishing callback to finish and exit out the callback
+                    if thread is not None:
+                        thread.join()
                     self.pupil.close()
             logging.info("Pupil capture software closed.")
             self.initialize()
