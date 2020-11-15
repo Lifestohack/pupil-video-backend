@@ -7,6 +7,7 @@ from pupil import PupilManager
 import sys
 import log
 import logging
+import os
 
 class VideoBackEnd():
     def __init__(self, host=None, port=None):
@@ -57,6 +58,7 @@ class VideoBackEnd():
         return thread
 
     def _listenAndStartStreaming(self, callback):
+        thread = None
         try:
             if self.device == "world":
                 # If videosource is none that means you are implementing your own source. 
@@ -80,14 +82,26 @@ class VideoBackEnd():
                 elif b"world_process.stopped" == message[b"subject"]:
                     self.start_publishing = False
                     listen_to_notification = False
-                    if thread is not None:
-                        thread.join()
-                    self.pupil.close()
-            logging.info("Pupil capture software closed.")
-            self.initialize()
-            self.start(self.device, self.videosource, self.callback)
+        except (KeyboardInterrupt, SystemExit):
+            logging.info('Exit due to keyboard interrupt')
+            self.start_publishing = False
+            if thread is not None:
+                thread.join()
+            self.close()
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0)
         except Exception as ex:
             logging.error(ex)
+        finally:
+            if thread is not None:
+                thread.join()
+            self.close()
+            logging.info("Pupil capture software closed.")
+        # Re-Initialize again and start listening to pupil remote
+        self.initialize()
+        self.start(self.device, self.videosource, self.callback)
 
     def _streamVideo(self):
         logging.info("Starting the stream for device:{}.".format(self.device))
@@ -115,7 +129,7 @@ class VideoBackEnd():
                 counter = counter + 1
                 frame_index = frame_index + 1
         except (KeyboardInterrupt, SystemExit):
-            logging.debug('Exit due to keyboard interrupt')
+            logging.info('Exit due to keyboard interrupt')
         except Exception as ex:
             logging.error(ex)
         finally:
@@ -144,3 +158,7 @@ class VideoBackEnd():
         # loop over is_publishable to publish each payload.
         # It is needed because if eye process or world process is stopped then it doesnot make sense to stream video
         return self.start_publishing
+
+    def close(self):
+        if self.pupil is not None:
+            self.pupil.close()
