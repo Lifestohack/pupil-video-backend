@@ -38,7 +38,7 @@ class StartThreadToStream:
         self._stop = True
 
 
-ip = "192.168.0.188"    # ip address of remote pupil or localhost
+ip = "127.0.0.1"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
 device = "world"
 
