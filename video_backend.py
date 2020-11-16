@@ -7,7 +7,7 @@ from pupil import PupilManager
 import sys
 import log
 import logging
-import os
+import os, traceback
 class VideoBackEnd():
     def __init__(self, host=None, port=None):
         self.host = host
@@ -15,22 +15,21 @@ class VideoBackEnd():
         self.start_publishing = False
         self.device = "world"
         self.initialize()
-    
+        self.videosource = 0
+        self.height = 192
+        self.width = 192
+        self.frame = 90
+
     def initialize(self):
         self.pupil = PupilManager(self.host, self.port)
         self.msg_streamer = self.pupil.get_msg_streamer()
         self.clock = Clock_Follower(self.pupil, monotonic)
 
-    def start(self, device="world", videosource=0, callback=None):
+    def start(self, device="world", callback=None):
         # device = "eye0" or device = "eye1" or device = "world"
         try:
             self.device = device
-            self.videosource = videosource
             self.callback = callback
-            if self.videosource is None and self.callback is None:
-                self.videosource = 0
-            if callback is None:
-                self.videosource = None
             if self.device is None:
                 self.device = "world"
             plugin_type = ""
@@ -46,13 +45,13 @@ class VideoBackEnd():
             # Start the plugin
             self.pupil.notify({"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
             self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
-        except Exception as ex:
-            logging.error(ex)
+        except Exception:
+            exp = traceback.format_exc()
+            logging.error(exp)
 
     def _threadedStream(self, callback):
         thread = threading.Thread(target=callback, args=())
         thread.daemon = True
-        self.setVideoCaptureParam(videosource=self.videosource)
         thread.start()
         return thread
 
@@ -92,8 +91,9 @@ class VideoBackEnd():
                 sys.exit(0)
             except SystemExit:
                 os._exit(0)
-        except Exception as ex:
-            logging.error(ex)
+        except Exception:
+            exp = traceback.format_exc()
+            logging.error(exp)
         finally:
             if thread is not None:
                 thread.join()
@@ -104,17 +104,19 @@ class VideoBackEnd():
         self.start(self.device, self.videosource, self.callback)
 
     def _streamVideo(self):
-        logging.info("Starting the stream for device:{}.".format(self.device))
-        frame_index = 1
-        fps = 0
-        counter = 0
-        cap = cv2.VideoCapture(self.videosource)
-        cap.set(3, self.width)
-        cap.set(4, self.height)
-        cap.set(5, self.frame)
-        payload = Payload(self.device, self.width, self.height)
-        start_time = time()
         try:
+            logging.info("Using default camera source:{}".format(self.videosource))
+            logging.info("Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(self.height, self.width, self.frame))
+            logging.info("Starting the stream for device:{}.".format(self.device))
+            frame_index = 1
+            fps = 0
+            counter = 0
+            cap = cv2.VideoCapture(self.videosource)
+            cap.set(3, self.width)
+            cap.set(4, self.height)
+            cap.set(5, self.frame)
+            payload = Payload(self.device, self.width, self.height)
+            start_time = time()
             while self.start_publishing == True:
                 _, image = cap.read()
                 payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
@@ -130,8 +132,9 @@ class VideoBackEnd():
                 frame_index = frame_index + 1
         except (KeyboardInterrupt, SystemExit):
             logging.info('Exit due to keyboard interrupt')
-        except Exception as ex:
-            logging.error(ex)
+        except Exception:
+            exp = traceback.format_exc()
+            logging.error(exp)
         finally:
             logging.info("Stopping the stream for device: {}.".format(self.device))
             cap.release()
@@ -142,8 +145,6 @@ class VideoBackEnd():
         self.height = 192 if height is None else height
         self.width = 192 if width is None else width
         self.frame = 90 if frame is None else frame
-        logging.info("Using default camera source:{}".format(self.videosource))
-        logging.info("Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(self.height, self.width, self.frame))
 
     def get_msg_streamer(self):
         """
