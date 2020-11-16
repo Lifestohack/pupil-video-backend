@@ -8,7 +8,7 @@ class Clock_Follower():
         self.time = time
         self.pupil_remote = pupil_remote
         mean_offset, offset_jitter = self.get_offsets()
-        self.offset = abs(mean_offset) + abs(offset_jitter)
+        self.offset = mean_offset + offset_jitter
 
     def get_offsets(self):
         times = []
@@ -33,4 +33,4 @@ class Clock_Follower():
         """
         Returns time after sync.
         """
-        return localtime + self.offset
+        return localtime - self.offset if localtime > self.offset else localtime + self.offset
