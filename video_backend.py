@@ -8,8 +8,6 @@ import sys
 import log
 import logging
 import os
-from time_sync import Clock_Follower
-
 class VideoBackEnd():
     def __init__(self, host=None, port=None):
         self.host = host
@@ -21,7 +19,7 @@ class VideoBackEnd():
     def initialize(self):
         self.pupil = PupilManager(self.host, self.port)
         self.msg_streamer = self.pupil.get_msg_streamer()
-        self.clock = None   # it will be set if callback is None
+        self.clock = Clock_Follower(self.pupil, monotonic)
 
     def start(self, device="world", videosource=0, callback=None):
         # device = "eye0" or device = "eye1" or device = "world"
@@ -33,7 +31,6 @@ class VideoBackEnd():
             if self.videosource is None and self.callback is None:
                 self.videosource = 0
             if callback is None:
-                self.clock = Clock_Follower(self.pupil, monotonic)
                 self.videosource = None
             if self.device is None:
                 self.device = "world"
@@ -120,7 +117,7 @@ class VideoBackEnd():
         try:
             while self.start_publishing == True:
                 _, image = cap.read()
-                payload.setPayloadParam(self.clock.get_synced_pupil_time(monotonic()), image, frame_index)
+                payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
                 if seconds > 1:
@@ -161,6 +158,9 @@ class VideoBackEnd():
         # loop over is_publishable to publish each payload.
         # It is needed because if eye process or world process is stopped then it doesnot make sense to stream video
         return self.start_publishing
+
+    def get_synced_pupil_time(self, localtime):
+        return self.clock.get_synced_pupil_time(localtime)
 
     def close(self):
         if self.pupil is not None:
