@@ -95,13 +95,14 @@ class VideoBackEnd():
             exp = traceback.format_exc()
             logging.error(exp)
         finally:
+            sleep(5)
             if thread is not None:
                 thread.join()
             self.close()
             logging.info("Pupil capture software closed.")
         # Re-Initialize again and start listening to pupil remote
         self.initialize()
-        self.start(self.device, self.videosource, self.callback)
+        self.start(self.device, self.callback)
 
     def _streamVideo(self):
         try:
