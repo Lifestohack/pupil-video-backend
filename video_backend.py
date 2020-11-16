@@ -43,7 +43,9 @@ class VideoBackEnd():
                 raise ValueError(err)
             topic = "hmd_streaming." + self.device
             # Start the plugin
-            self.pupil.notify({"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}})
+            notification = {"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}}
+            logging.debug(notification)
+            self.pupil.notify(notification)
             self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
         except Exception:
             exp = traceback.format_exc()
@@ -56,7 +58,7 @@ class VideoBackEnd():
         return thread
 
     def _listenAndStartStreaming(self, callback):
-        logging.info("Publishing to device:{}".format(self.device))
+        logging.info("Will publish to device:{}".format(self.device))
         thread = None
         try:
             if self.device == "world":
@@ -95,7 +97,6 @@ class VideoBackEnd():
             exp = traceback.format_exc()
             logging.error(exp)
         finally:
-            sleep(5)
             if thread is not None:
                 thread.join()
             self.close()
