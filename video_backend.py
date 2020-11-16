@@ -24,7 +24,6 @@ class VideoBackEnd():
     def start(self, device="world", videosource=0, callback=None):
         # device = "eye0" or device = "eye1" or device = "world"
         try:
-            logging.info("Publishing to device:{}".format(device))
             self.device = device
             self.videosource = videosource
             self.callback = callback
@@ -58,6 +57,7 @@ class VideoBackEnd():
         return thread
 
     def _listenAndStartStreaming(self, callback):
+        logging.info("Publishing to device:{}".format(self.device))
         thread = None
         try:
             if self.device == "world":
@@ -142,7 +142,7 @@ class VideoBackEnd():
         self.height = 192 if height is None else height
         self.width = 192 if width is None else width
         self.frame = 90 if frame is None else frame
-        logging.info("Using default camera source:{}".format(videosource))
+        logging.info("Using default camera source:{}".format(self.videosource))
         logging.info("Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(self.height, self.width, self.frame))
 
     def get_msg_streamer(self):
