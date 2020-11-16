@@ -8,6 +8,7 @@ import sys
 import log
 import logging
 import os
+from time_sync import Clock_Follower
 
 class VideoBackEnd():
     def __init__(self, host=None, port=None):
@@ -20,6 +21,7 @@ class VideoBackEnd():
     def initialize(self):
         self.pupil = PupilManager(self.host, self.port)
         self.msg_streamer = self.pupil.get_msg_streamer()
+        self.clock = None   # it will be set if callback is None
 
     def start(self, device="world", videosource=0, callback=None):
         # device = "eye0" or device = "eye1" or device = "world"
@@ -31,6 +33,7 @@ class VideoBackEnd():
             if self.videosource is None and self.callback is None:
                 self.videosource = 0
             if callback is None:
+                self.clock = Clock_Follower(self.pupil, monotonic)
                 self.videosource = None
             if self.device is None:
                 self.device = "world"
@@ -117,7 +120,7 @@ class VideoBackEnd():
         try:
             while self.start_publishing == True:
                 _, image = cap.read()
-                payload.setPayloadParam(time(), image, frame_index)
+                payload.setPayloadParam(self.clock.get_synced_pupil_time(monotonic()), image, frame_index)
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
                 if seconds > 1:
@@ -137,11 +140,11 @@ class VideoBackEnd():
             cap.release()
             logging.info("Total Published frames: {}, FPS:{}.".format(frame_index, fps))
 
-    def setVideoCaptureParam(self, videosource=0, height=240, width=320, frame=30):
+    def setVideoCaptureParam(self, videosource=0, height=192, width=192, frame=90):
         self.videosource = 0 if videosource is None else videosource
-        self.height = 240 if height is None else height
-        self.width = 320 if width is None else width
-        self.frame = 30 if frame is None else frame
+        self.height = 192 if height is None else height
+        self.width = 192 if width is None else width
+        self.frame = 90 if frame is None else frame
         logging.info("Using default camera source:{}".format(videosource))
         logging.info("Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(self.height, self.width, self.frame))
 
