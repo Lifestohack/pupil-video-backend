@@ -28,7 +28,7 @@ Run this program three times with different video sources if you want to have wo
 
 ## Start from terminal
 ```sh
-python main.py [-h] [-d DEVICE] [-i IP] [-p PORT] [-vs VIDEOSOURCE]
+python main.py [-h] [-d DEVICE] [-i IP] [-p PORT] [-vs VIDEOSOURCE] [-vp VIDEOPARAMETER]
 ```
 Example:
 ```sh
