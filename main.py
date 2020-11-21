@@ -16,7 +16,7 @@ parser.add_argument('-vp','--videoparameter',help='Video parameters. Example: "1
 args = parser.parse_args()
 
 def main(host, port, device, videosource, videoparameter):
-    height = width = frame = videosource = None
+    height = width = frame = None
     if videoparameter is not None:
         param = videoparameter.split(",")
         height=get_int(param[0])
