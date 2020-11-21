@@ -114,13 +114,32 @@ class VideoBackEnd():
             fps = 0
             counter = 0
             cap = cv2.VideoCapture(self.videosource)
+            if not cap.isOpened():
+                logging.critical("Cannot open camera for camera index {}".format(self.videosource))
+                exit(0)
             cap.set(3, self.width)
             cap.set(4, self.height)
             cap.set(5, self.frame)
+            _, frame = cap.read()
+            if not _:
+                logging.critical("Can't receive frame (stream end?). Exiting ...")
+                exit(0)
+            hertz = cap.get(5)
+            width = frame.shape[1]
+            height = frame.shape[0]
+            payload = Payload("world", width, height)
+            if self.width != width or self.height!= height or self.frame != hertz:
+                logging.info("Camera changed capture parameters. Height:{}, Width:{}, FPS:{}".format(height, width, hertz))
+            self.height = height
+            self.width = width
+            self.frame = hertz
             payload = Payload(self.device, self.width, self.height)
             start_time = time()
             while self.start_publishing == True:
-                _, image = cap.read()
+                ret, image = cap.read()
+                if not ret:
+                    logging.critical("Can't receive frame. Exiting ...")
+                    break
                 payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
@@ -133,7 +152,7 @@ class VideoBackEnd():
                 counter = counter + 1
                 frame_index = frame_index + 1
         except (KeyboardInterrupt, SystemExit):
-            logging.info('Exit due to keyboard interrupt')
+            logging.info('Exit due to keyboard or SystemExit interrupt')
         except Exception:
             exp = traceback.format_exc()
             logging.error(exp)
