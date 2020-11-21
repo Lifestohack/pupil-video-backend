@@ -10,6 +10,8 @@ import traceback
 from time import sleep, time
 import log
 import logging
+import numpy
+import cv2
 
 # Helper class implementing an IO deamon thread
 class StartThreadToStream:
@@ -39,9 +41,9 @@ class StartThreadToStream:
     def close(self):
         self._stop = True
 
-ip = "127.0.0.1"    # ip address of remote pupil or localhost
+ip = "192.168.0.188"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
-device = "world"
+device = "eye0"
 
 # initialize the stream
 backend = VideoBackEnd(ip, port)
@@ -57,13 +59,13 @@ def streamVideo():
         # set camera parameters
         camera.resolution = resolution
         camera.framerate = framerate
-        rawCapture = PiRGBArray(camera, size=resolution)
-        #rawCapture = PiYUVArray(camera, size=resolution)
-        stream = camera.capture_continuous(rawCapture, format="rgb", use_video_port=True)
+        #rawCapture = PiRGBArray(camera, size=resolution)
+        rawCapture = PiYUVArray(camera, size=resolution)
+        stream = camera.capture_continuous(rawCapture, format="yuv", use_video_port=True)
         frame_counter_per_sec = 0
         frame_index = 1
         #streamimage = StartThreadToStream(pub_socket)
-        payload = Payload(device, resolution[0], resolution[1])
+        payload = Payload(device, resolution[0], resolution[1], "gray")
         fps = 0
         start_time = time()
         try:
@@ -72,6 +74,8 @@ def streamVideo():
                     # grab the frame from the stream and clear the stream in
                     # preparation for the next frame
                     frame = f.array
+                    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    frame = numpy.ascontiguousarray(frame[:,:,0])
                     payload.setPayloadParam(time(), frame, frame_index)
                     #streamimage.dataready(payload.get())    #   give it to StartThreadToStream to publish
                     pub_socket.send(payload.get())           #   publish here
@@ -80,8 +84,8 @@ def streamVideo():
                         fps = frame_counter_per_sec
                         frame_counter_per_sec = 0
                         start_time = time()
-                    #outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
-                    #sys.stdout.write('\r'+ outstr)
+                    outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
+                    sys.stdout.write('\r'+ outstr)
                     frame_counter_per_sec = frame_counter_per_sec + 1
                     frame_index = frame_index + 1
                     rawCapture.truncate(0)
