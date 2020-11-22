@@ -7,6 +7,9 @@ Install Dependencies:
 sudo apt install -y python3-opencv
 python3 -m pip install pyzmq
 python3 -m pip install msgpack==0.5.6
+
+#For the example: raspberrypi.py
+sudo apt-get install python3-picamera
 ```
 
 Clone the repo
