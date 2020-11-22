@@ -112,7 +112,7 @@ class VideoBackEnd():
             logging.info("Starting the stream for device:{}.".format(self.device))
             frame_index = 1
             fps = 0
-            counter = 0
+            counter = 1
             cap = cv2.VideoCapture(self.videosource)
             if not cap.isOpened():
                 logging.critical("Cannot open camera for camera index {}".format(self.videosource))
@@ -120,8 +120,8 @@ class VideoBackEnd():
             cap.set(3, self.width)
             cap.set(4, self.height)
             cap.set(5, self.frame)
-            _, frame = cap.read()
-            if not _:
+            ret, frame = cap.read()
+            if not ret:
                 logging.critical("Can't receive frame (stream end?). Exiting ...")
                 exit(0)
             hertz = cap.get(5)
@@ -136,10 +136,7 @@ class VideoBackEnd():
             payload = Payload(self.device, self.width, self.height)
             start_time = time()
             while self.start_publishing == True:
-                ret, image = cap.read()
-                if not ret:
-                    logging.critical("Can't receive frame. Exiting ...")
-                    break
+                _, image = cap.read()
                 payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
