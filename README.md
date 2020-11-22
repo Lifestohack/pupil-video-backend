@@ -2,6 +2,12 @@
 
 This program helps you to stream the video from another computer or Raspberry pi to your computer where pupil capture software is running. No configuration is needed on the computer where pupil capture software is running. Just Run this program on remote computer with webcam. Make sure pupil capture software is already running before running this program.
 
+Install Dependencies:
+```sh
+sudo apt install -y python3-opencv
+python3 -m pip install pyzmq
+python3 -m pip install msgpack==0.5.6
+```
 
 Clone the repo
 ```sh
