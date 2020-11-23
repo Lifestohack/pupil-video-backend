@@ -8,6 +8,7 @@ import sys
 import log
 import logging
 import os, traceback
+
 class VideoBackEnd():
     def __init__(self, host=None, port=None):
         self.host = host
@@ -135,8 +136,10 @@ class VideoBackEnd():
             self.frame = hertz
             payload = Payload(self.device, self.width, self.height)
             start_time = time()
+            image_read_time = time()
             while self.start_publishing == True:
                 _, image = cap.read()
+                latency = time() - image_read_time
                 payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
@@ -144,10 +147,11 @@ class VideoBackEnd():
                     fps = counter
                     counter = 0
                     start_time = time()
-                #outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
-                #sys.stdout.write('\r'+ outstr)
+                outstr = "Frames: {}, FPS: {}, Frame Read latency: {}".format(frame_index, fps, latency) 
+                sys.stdout.write('\r'+ outstr)
                 counter = counter + 1
                 frame_index = frame_index + 1
+                image_read_time = time()
         except (KeyboardInterrupt, SystemExit):
             logging.info('Exit due to keyboard or SystemExit interrupt')
         except Exception:
