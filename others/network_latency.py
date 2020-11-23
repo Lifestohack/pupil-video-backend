@@ -21,7 +21,7 @@ def get_network_latency():
     return min(latency_one_direction), sum(latency_one_direction) / len(latency_one_direction), max(latency_one_direction)
     
 if __name__ == "__main__":
-    min_lat, avg_lat, max_lat = get_offsets()
+    min_lat, avg_lat, max_lat = get_network_latency()
     logging.info("One direction Network latency calculated between Video backend and Pupil Software.")
     logging.info("Minimum:{} second".format(min_lat))
     logging.info("Average:{} second".format(avg_lat))
