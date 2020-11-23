@@ -6,7 +6,7 @@ import log, logging
 
 resolution =  (192, 192)
 framerate = 90
-time_to_calculate_latency = 10
+time_to_calculate_latency = 5
 logging.info("Calculating the Camera lateny. It will take around {} seconds.".format(time_to_calculate_latency))
 
 with picamera.PiCamera() as camera:
@@ -18,13 +18,13 @@ with picamera.PiCamera() as camera:
     stream = camera.capture_continuous(rawCapture, 
                                         format="yuv", 
                                         use_video_port=True)
-    start_time = monotonic()
     latencies = []
     counter = 0
+    start_time = monotonic()
     for f in stream:
         frame = f.array
         latency = monotonic() - start_time
-        latencies.append(latency)
+        latencies.append(latency)   
         rawCapture.truncate(0)
         counter += 1
         if counter >= time_to_calculate_latency * framerate:
@@ -32,6 +32,8 @@ with picamera.PiCamera() as camera:
             break
         start_time = monotonic()
 
+latencies.sort()
+latencies = latencies[:int(len(latencies) * 0.99)]
 min_lat, avg_lat, max_lat = min(latencies), sum(latencies) / len(latencies), max(latencies)
 logging.info("One direction Camera latency calculated between Video backend and Pupil Software.")
 logging.info("Minimum:{} second".format(min_lat))
