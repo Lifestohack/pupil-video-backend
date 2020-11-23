@@ -1,4 +1,4 @@
-from time import time
+from time import time, sleep
 from pupil import PupilManager
 import log, logging
 
@@ -9,19 +9,21 @@ pupil = PupilManager(host, port)
 
 def get_offsets():
     times = []
-    for _ in range(60):
+    logging.info("Calculating the network lateny...")
+    for _ in range(100):
+        sleep(0.003) #simulate spaced requests as in real world
         t0 = time()
-        t1 = pupil.get_pupil_time()
-        t2 = time()
-        times.append((t0, t1, t2))
-    times.sort(key=lambda t: t[2] - t[0])
-    times = times[:int(len(times) * 0.69)]
-
+        pupil.get_pupil_time()
+        t1 = time()
+        times.append((t0, t1))
     # Assuming latency on both direction to be same.
-    latency_one_direction = [(t2 - t0) / 2 for t0, _, t2 in times]
-    return sum(latency_one_direction) / len(latency_one_direction)
+    latency_one_direction = [(t1 - t0) / 2 for t0, t1 in times]
+    return min(latency_one_direction), sum(latency_one_direction) / len(latency_one_direction), max(latency_one_direction)
     
 
-latency_one_direction = get_offsets()
-logging.info("One direction Network: Calculated between Video backend and Pupil Software: {}second".format(latency_one_direction))
+min_lat, avg_lat, max_lat = get_offsets()
+logging.info("One direction Network latency calculated between Video backend and Pupil Software.")
+logging.info("Minimum:{} second".format(min_lat))
+logging.info("Average:{} second".format(avg_lat))
+logging.info("Maximum:{} second".format(max_lat))
 pupil.close()
