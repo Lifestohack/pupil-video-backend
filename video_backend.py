@@ -21,7 +21,7 @@ class VideoBackEnd():
         self.frame = 90
 
     def initialize(self):
-        self.pupil = PupilManager(self.host, self.port)
+        self.pupil = PupilManager(self.host, self.port, hwm=1)
         self.msg_streamer = self.pupil.get_msg_streamer()
         self.clock = Clock_Follower(self.pupil, monotonic)
 
@@ -43,7 +43,7 @@ class VideoBackEnd():
                 raise ValueError(err)
             topic = "hmd_streaming." + self.device
             # Start the plugin
-            notification = {"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}}
+            notification = {"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,), "hwm":1}}
             logging.debug(notification)
             self.pupil.notify(notification)
             self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
