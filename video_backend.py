@@ -8,6 +8,7 @@ import sys
 import log
 import logging
 import os, traceback
+
 class VideoBackEnd():
     def __init__(self, host=None, port=None):
         self.host = host
@@ -21,7 +22,7 @@ class VideoBackEnd():
         self.frame = 90
 
     def initialize(self):
-        self.pupil = PupilManager(self.host, self.port)
+        self.pupil = PupilManager(self.host, self.port, hwm=1)
         self.msg_streamer = self.pupil.get_msg_streamer()
         self.clock = Clock_Follower(self.pupil, monotonic)
 
@@ -43,7 +44,7 @@ class VideoBackEnd():
                 raise ValueError(err)
             topic = "hmd_streaming." + self.device
             # Start the plugin
-            notification = {"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,)}}
+            notification = {"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,), "hwm":1}}
             logging.debug(notification)
             self.pupil.notify(notification)
             self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
@@ -112,7 +113,7 @@ class VideoBackEnd():
             logging.info("Starting the stream for device:{}.".format(self.device))
             frame_index = 1
             fps = 0
-            counter = 0
+            counter = 1
             cap = cv2.VideoCapture(self.videosource)
             if not cap.isOpened():
                 logging.critical("Cannot open camera for camera index {}".format(self.videosource))
@@ -120,8 +121,8 @@ class VideoBackEnd():
             cap.set(3, self.width)
             cap.set(4, self.height)
             cap.set(5, self.frame)
-            _, frame = cap.read()
-            if not _:
+            ret, frame = cap.read()
+            if not ret:
                 logging.critical("Can't receive frame (stream end?). Exiting ...")
                 exit(0)
             hertz = cap.get(5)
@@ -135,11 +136,10 @@ class VideoBackEnd():
             self.frame = hertz
             payload = Payload(self.device, self.width, self.height)
             start_time = time()
+            image_read_time = time()
             while self.start_publishing == True:
-                ret, image = cap.read()
-                if not ret:
-                    logging.critical("Can't receive frame. Exiting ...")
-                    break
+                _, image = cap.read()
+                latency = time() - image_read_time
                 payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
@@ -147,10 +147,11 @@ class VideoBackEnd():
                     fps = counter
                     counter = 0
                     start_time = time()
-                #outstr = "Frames: {}, FPS: {}".format(frame_index, fps) 
-                #sys.stdout.write('\r'+ outstr)
+                outstr = "Frames: {}, FPS: {}, Frame Read latency: {}".format(frame_index, fps, latency) 
+                sys.stdout.write('\r'+ outstr)
                 counter = counter + 1
                 frame_index = frame_index + 1
+                image_read_time = time()
         except (KeyboardInterrupt, SystemExit):
             logging.info('Exit due to keyboard or SystemExit interrupt')
         except Exception:

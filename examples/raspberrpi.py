@@ -19,7 +19,7 @@ from fractions import Fraction
     Send one channel gray frame to pupil capture software.
 '''
 
-ip = "127.0.0.1"    # ip address of remote pupil or localhost
+ip = "10.3.141.136"    # ip address of remote pupil or localhost
 port = "50020"      # same as in the pupil remote gui
 device = "eye0"
 
@@ -61,7 +61,6 @@ class StartThreadToStream:
         self.newpayload = True
 
     def close(self):
-        self._thread.join()
         self._stop = True
 
 def streamVideo():
@@ -107,7 +106,7 @@ def streamVideo():
                         fps = frame_counter_per_sec
                         frame_counter_per_sec = 0
                         start_time = time()
-                    outstr = "Frames: {}, FPS: {}, Latency: {}".format(frame_index, fps, latency) 
+                    outstr = "Frames: {}, FPS: {}, Frame Read latency: {}".format(frame_index, fps, latency) 
                     sys.stdout.write('\r'+ outstr)
                     frame_counter_per_sec = frame_counter_per_sec + 1
                     frame_index = frame_index + 1
@@ -123,9 +122,10 @@ def streamVideo():
         finally:
             streamimage.close()
             del stream
+            del streamimage
             del rawCapture
-            logging.info("Stopping the stream for device: {}.".format(device))
             logging.info("Total Published frames: {}, FPS:{}.".format(frame_index, fps))
+            logging.info("Streaming stopped for the device: {}.".format(device))
 
 if __name__ == "__main__":
     backend.start(device, callback=streamVideo)
