@@ -4,7 +4,8 @@ from zmq_tools import Msg_Streamer
 import msgpack as serializer
 import logging
 
-class PupilManager():
+
+class PupilManager:
     def __init__(self, host=None, port=None, hwm=None):
         self.host = host
         self.port = port
@@ -18,10 +19,10 @@ class PupilManager():
 
     def initialize(self):
         """
-        Pupil Software listens to the IPC backend. 
-        The backend is like an echo chamber. 
-        You can either yell something into it, or listen what comes out. 
-        The hmd_streaming plugin listens for what comes out. 
+        Pupil Software listens to the IPC backend.
+        The backend is like an echo chamber.
+        You can either yell something into it, or listen what comes out.
+        The hmd_streaming plugin listens for what comes out.
         You need to yell into it. Request the PUB_PORT from Pupil remote
         1. Connect to Pupil Remote
         2. Send "PUB_PORT"
@@ -50,7 +51,7 @@ class PupilManager():
         self.subscriber = ctx.socket(zmq.SUB)
         icp_sub_add = "tcp://{}:{}".format(self.host, sub_port)
         self.subscriber.connect(icp_sub_add)
-        self.subscriber.subscribe('notify.')
+        self.subscriber.subscribe("notify.")
         logging.info("Connection Successful.")
 
     def _get_port(self, type):
@@ -59,7 +60,7 @@ class PupilManager():
         port = self.pupil_remote.recv_string()
         logging.debug("{}: {}".format(type, port))
         return port
-    
+
     def get_msg_streamer(self):
         return self.msg_streamer
 
@@ -73,9 +74,9 @@ class PupilManager():
         return self.pupil_remote
 
     def get_pupil_time(self):
-        self.pupil_remote.send_string('t')
+        self.pupil_remote.send_string("t")
         return self.pupil_remote.recv_string()
-        
+
     def notify(self, notification):
         # send notification:
         """Sends ``notification`` to Pupil Remote"""
@@ -84,7 +85,7 @@ class PupilManager():
         self.pupil_remote.send_string(topic, flags=zmq.SNDMORE)
         self.pupil_remote.send(payload)
         return self.pupil_remote.recv_string()
-    
+
     def close(self):
         self.pupil_remote.close()
         self.subscriber.close()

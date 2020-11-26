@@ -1,6 +1,7 @@
 from time import monotonic
 
-class Clock_Follower():
+
+class Clock_Follower:
 
     # https://github.com/pupil-labs/pupil/blob/master/pupil_src/shared_modules/time_sync_spec.md
 
@@ -18,13 +19,13 @@ class Clock_Follower():
             t2 = self.time()
             times.append((t0, t1, t2))
         times.sort(key=lambda t: t[2] - t[0])
-        times = times[:int(len(times) * 0.69)]
+        times = times[: int(len(times) * 0.69)]
 
         # Assuming latency on both direction to be same.
         offsets = [t0 - ((float(t1) + (t2 - t0) / 2)) for t0, t1, t2 in times]
         mean_offset = sum(offsets) / len(offsets)
-        
-        # Jitter is the deviation from the clock's ideal behavior. 
+
+        # Jitter is the deviation from the clock's ideal behavior.
         # It means the clock edges weren't where you expected them to.
         offset_jitter = sum([abs(mean_offset - o) for o in offsets]) / len(offsets)
         return mean_offset, offset_jitter
@@ -33,4 +34,8 @@ class Clock_Follower():
         """
         Returns time after sync.
         """
-        return localtime - self.offset if localtime > self.offset else localtime + self.offset
+        return (
+            localtime - self.offset
+            if localtime > self.offset
+            else localtime + self.offset
+        )

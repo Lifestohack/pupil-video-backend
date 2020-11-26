@@ -9,7 +9,8 @@ import log
 import logging
 import os, traceback
 
-class VideoBackEnd():
+
+class VideoBackEnd:
     def __init__(self, host=None, port=None):
         self.host = host
         self.port = port
@@ -44,10 +45,17 @@ class VideoBackEnd():
                 raise ValueError(err)
             topic = "hmd_streaming." + self.device
             # Start the plugin
-            notification = {"subject": plugin_type, "target": self.device, "name": "HMD_Streaming_Source", "args": {"topics": (topic,), "hwm":1}}
+            notification = {
+                "subject": plugin_type,
+                "target": self.device,
+                "name": "HMD_Streaming_Source",
+                "args": {"topics": (topic,), "hwm": 1},
+            }
             logging.debug(notification)
             self.pupil.notify(notification)
-            self._listenAndStartStreaming(self._streamVideo if self.callback is None else self.callback)
+            self._listenAndStartStreaming(
+                self._streamVideo if self.callback is None else self.callback
+            )
         except Exception:
             exp = traceback.format_exc()
             logging.error(exp)
@@ -63,21 +71,25 @@ class VideoBackEnd():
         thread = None
         try:
             if self.device == "world":
-                # If videosource is none that means you are implementing your own source. 
+                # If videosource is none that means you are implementing your own source.
                 # Call get_pub_socket() to get Message streamer.
                 # Call  is_publishable() before publish each payload.
                 # Pupil capture software is already notified to start plugin.
                 self.start_publishing = True
-                thread = self._threadedStream(callback)             
+                thread = self._threadedStream(callback)
             listen_to_notification = True
             while listen_to_notification:
                 message = self.pupil.get_notification()
-                if b"eye_process.started" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
+                if b"eye_process.started" == message[b"subject"] and self.device[
+                    -1
+                ] == str(message[b"eye_id"]):
                     # If thread has not started then start the thread
                     if self.start_publishing == False:
                         self.start_publishing = True
                         thread = self._threadedStream(callback)
-                elif b"eye_process.stopped" == message[b"subject"] and self.device[-1] == str(message[b"eye_id"]):
+                elif b"eye_process.stopped" == message[b"subject"] and self.device[
+                    -1
+                ] == str(message[b"eye_id"]):
                     self.start_publishing = False
                     if thread is not None:
                         thread.join()
@@ -85,7 +97,7 @@ class VideoBackEnd():
                     self.start_publishing = False
                     listen_to_notification = False
         except (KeyboardInterrupt, SystemExit):
-            logging.info('Exit due to keyboard interrupt')
+            logging.info("Exit due to keyboard interrupt")
             self.start_publishing = False
             if thread is not None:
                 thread.join()
@@ -109,14 +121,20 @@ class VideoBackEnd():
     def _streamVideo(self):
         try:
             logging.info("Using default camera source:{}".format(self.videosource))
-            logging.info("Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(self.height, self.width, self.frame))
+            logging.info(
+                "Setting video capture parameters. Height:{}, Width:{}, FPS:{}".format(
+                    self.height, self.width, self.frame
+                )
+            )
             logging.info("Starting the stream for device:{}.".format(self.device))
             frame_index = 1
             fps = 0
             counter = 1
             cap = cv2.VideoCapture(self.videosource)
             if not cap.isOpened():
-                logging.critical("Cannot open camera for camera index {}".format(self.videosource))
+                logging.critical(
+                    "Cannot open camera for camera index {}".format(self.videosource)
+                )
                 exit(0)
             cap.set(3, self.width)
             cap.set(4, self.height)
@@ -129,8 +147,12 @@ class VideoBackEnd():
             width = frame.shape[1]
             height = frame.shape[0]
             payload = Payload("world", width, height)
-            if self.width != width or self.height!= height or self.frame != hertz:
-                logging.info("Camera changed capture parameters. Height:{}, Width:{}, FPS:{}".format(height, width, hertz))
+            if self.width != width or self.height != height or self.frame != hertz:
+                logging.info(
+                    "Camera changed capture parameters. Height:{}, Width:{}, FPS:{}".format(
+                        height, width, hertz
+                    )
+                )
             self.height = height
             self.width = width
             self.frame = hertz
@@ -140,20 +162,24 @@ class VideoBackEnd():
             while self.start_publishing == True:
                 _, image = cap.read()
                 latency = time() - image_read_time
-                payload.setPayloadParam(self.get_synced_pupil_time(monotonic()), image, frame_index)
+                payload.setPayloadParam(
+                    self.get_synced_pupil_time(monotonic()), image, frame_index
+                )
                 self.msg_streamer.send(payload.get())
                 seconds = time() - start_time
                 if seconds > 1:
                     fps = counter
                     counter = 0
                     start_time = time()
-                outstr = "Frames: {}, FPS: {}, Frame Read latency: {}".format(frame_index, fps, latency) 
-                sys.stdout.write('\r'+ outstr)
+                outstr = "Frames: {}, FPS: {}, Frame Read latency: {}".format(
+                    frame_index, fps, latency
+                )
+                sys.stdout.write("\r" + outstr)
                 counter = counter + 1
                 frame_index = frame_index + 1
                 image_read_time = time()
         except (KeyboardInterrupt, SystemExit):
-            logging.info('Exit due to keyboard or SystemExit interrupt')
+            logging.info("Exit due to keyboard or SystemExit interrupt")
         except Exception:
             exp = traceback.format_exc()
             logging.error(exp)
