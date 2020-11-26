@@ -1,11 +1,8 @@
 class Payload:
     def __init__(self, topic, width, height, format="bgr", intrinsics=None):
         if intrinsics is None:
-            # intrinsics = [
-            #             [0.0, 0.0, 0.0],
-            #             [0.0, 0.0, 0.0],
-            #             [0.0, 0.0, 0.0],
-            #         ]
+            # Dummy Camera model assuming no lense distortion and idealized camera intrinsics.
+            # For 192x192 pixels.
             intrinsics = [
                 [1000, 0.0, 192 / 2.0],
                 [0.0, 1000, 192 / 2.0],
